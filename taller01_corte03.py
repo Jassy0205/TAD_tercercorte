@@ -61,7 +61,9 @@ class listas:
         cont = self.ancho/7
 
         while i < nodes:
-            pygame.draw.circle(self.win, (100,100,255), (x,y), 20, 10)
+            pygame.draw.circle(self.win, (100,10,255), (x,y), 20)
+            xfinal = x+(cont-25)
+            pygame.draw.line(self.win, (100,0,105), (x+25,y), (xfinal,y))
             x += cont
             
             if y > self.alto+6:

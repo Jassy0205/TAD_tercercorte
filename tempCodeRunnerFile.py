@@ -1,0 +1,1 @@
+#screen_4.input_information()
