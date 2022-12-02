@@ -3,20 +3,28 @@ import pygame
 import sys
 
 class arbol():
+
+    class Node:
+        def __init__(self, value):
+            self.value = value
+            self.left_branch = None
+            self.rigth_branch = None
+
     def __init__(self):
         pygame.init()
 
-        self.alto = 500
-        self.ancho = 850
-        self.terminar = False
+        self.alto = 850
+        self.ancho = 910
+        self.terminar_arbol = False
         self.terminar_1 = False
+        self.terminar_combo = False
 
         self.user_text = ''
+        self.value_input = ''
 
         self.base = 'Cantidad de nodos del arbol: '
         self.value = 'Valor del nodo: '
-        self.father = 'Valor del padre: '
-        self.input_rect = pygame.Rect(346, 5, 100, 30)
+        self.input_rect = pygame.Rect(346, 5, 160, 30)
 
         self.numeros = 0
         self.nodes = []
@@ -24,23 +32,125 @@ class arbol():
         self.ubicacion = []
 
         self.base_font = pygame.font.Font(None, 32)
+        self.base_font_2 = pygame.font.Font(None, 23)
 
         self.win = pygame.display.set_mode((self.ancho, self.alto))
         self.win.fill((0,0,0))
 
-        print("guhu")
+        self.root = None
+        self.length = None
 
-        '''root = Node(10)
+        self.color_menu = (255, 255, 255)
+        self.color_option = (0, 0, 0)
+        self.rect_combo = pygame.Rect(550, 5, 100, 25) 
+        self.options = ['inorder', 'preorder', 'postorder']
+        self.draw_menu = False
+        self.rectas_options = []
+        self.eleccion = None
+        self.reccorrido = ''
 
-        level_1_child_1 = Node(34, parent=root)
-        level_1_child_2 = Node(89, parent=root)
-        level_2_child_1 = Node(45, parent=level_1_child_1)
-        level_2_child_2 = Node(50, parent=level_1_child_2)
+    def combo_draw(self):
+        pygame.draw.rect(self.win, self.color_menu, self.rect_combo, 0)
+        self.img = pygame.image.load("descarga.png")
+        self.rect_2 = pygame.Rect(550, 5, 100, 25) 
+        self.rect_2.left += 100
+        self.win.blit(self.img, self.rect_2)
 
-        for pre, fill, node in RenderTree(root):
-            print("%s%s" % (pre, node.name))'''
-    
-    #Se crea una función
+    def borrar_informacion_combobox(self, desplegado):
+        self.combo_draw()
+
+        if desplegado == True: 
+            for i, text in enumerate(self.options):
+                rect = self.rect_combo.copy()
+
+                rect.y += (i+1) * self.rect_combo.height
+                self.rectas_options.insert(i, rect)
+                if len(self.rectas_options) > i+1:
+                    self.rectas_options.pop(i+1)
+
+                pygame.draw.rect(self.win, self.color_menu, rect, 0)
+                msg = self.base_font_2.render(text, 1, self.color_option)
+                self.win.blit(msg, rect)
+
+        if self.eleccion != None: 
+            msg = self.base_font_2.render(self.eleccion, 1, (0, 0, 0))
+            self.win.blit(msg, self.rect_combo)
+
+    def insert(self, value):
+        new_node = self.Node(value)
+
+        if self.root == None:
+            self.root = new_node
+        else:
+            def tree_route(value, node):
+                if value == node.value:
+                    return "El elemento ya existe"
+
+                elif value < node.value:
+                    if node.left_branch == None:
+                        node.left_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.left_branch)
+
+                elif value > node.value:
+                    if node.rigth_branch == None:
+                        node.rigth_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.rigth_branch)
+                        
+            tree_route(value, self.root)
+
+    def preorder(self):
+        contenedor = []
+        def tree_route(node):
+            contenedor.append(node.value)
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('preorder', contenedor)
+
+    def imprimir_recorrido(self, contenedor):
+        self.reccorrido = ''
+        for i in range(len(contenedor)):
+            self.reccorrido += str(contenedor[i])
+            if i != len(contenedor) -1:
+                self.reccorrido += ','
+
+        text_surface = self.base_font.render(self.reccorrido, True, (0,255,255))
+        self.win.blit(text_surface, (210,50))
+
+    def inorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            contenedor.append(node.value)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('inorder', contenedor)
+
+    def postorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+            contenedor.append(node.value)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('postorder', contenedor) 
+
     def input_title(self):
         text_surface = self.base_font.render(self.base, True, (255,255,50))
         self.win.blit(text_surface, (30,10))
@@ -49,43 +159,90 @@ class arbol():
         text_surface = self.base_font.render(self.value, True, (255,255,50))
         self.win.blit(text_surface, (30,50))
 
-        text_surface = self.base_font.render(self.father, True, (255,255,50))
-        self.win.blit(text_surface, (550,50))
-
     def input_information(self):
         self.input_title()
         self.input_nodes()
-        input_rect_1 = pygame.Rect(200, 45, 50, 30)
-        input_rect_2 = pygame.Rect(720, 45, 80, 30)
+        input_rect_1 = pygame.Rect(200, 45, 310, 30)
         cont = 0
+        self.combo_draw()
+        cont_1 = 0
 
-        while not self.terminar:
+        while not self.terminar_arbol:
             for event in pygame.event.get():
 
-                if event.type == pygame.QUIT: 
-                    self.terminar = True
+                if event.type == pygame.QUIT:  self.terminar_arbol = True
 
                 while cont < self.numeros:
                     self.input_value_and_father()
                     pygame.draw.rect(self.win, (255,255,255), input_rect_1, 2)
-                    pygame.draw.rect(self.win, (255,255,255), input_rect_2, 2)
 
-                    i = self.input_value(input_rect_1, input_rect_2)
-                    j = self.input_father(input_rect_1, input_rect_2)
-                    self.draw_node(cont)
+                    i = self.input_value(input_rect_1)
 
-                    if j == "Hola" or i == "Hola": 
+                    if  i == "Hola": 
                         cont = self.numeros
 
-                    self.borrar_info(input_rect_1, input_rect_2, cont)
                     cont += 1
 
-                print(self.nodes)
-                print(self.parents)
-                print(self.ubicacion)
+                self.separar_cadena()
+                self.breadth_first_search()
+
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos() 
+                    if mouse_pos[0] >= self.rect_2.left and mouse_pos[0] <= self.rect_2.left+25:
+                        if cont_1 == 0 or cont_1%2 == 0:
+                            self.draw_menu = True
+                        else:
+                            self.win.fill((0,0,0))
+                            self.borrar_info(input_rect_1)
+                            self.draw_menu = False
+                        cont_1+= 1
+
+                    else:
+                        if self.draw_menu == True:
+                            i = 0
+                            while i <= len(self.rectas_options)-1:
+                                actual = self.rectas_options[i]
+                                if mouse_pos[1] <= actual.top+20 and mouse_pos[1] >= actual.top and mouse_pos[0] <= actual.left+90 and mouse_pos[0] >= actual.left:
+                                    self.win.fill((0,0,0))
+                                    self.eleccion = self.options[i]
+                                    self.elegir_recorrido()
+                                    self.borrar_info(input_rect_1)
+                                    self.draw_menu = False
+                                i+=1
+
+                if self.draw_menu:
+                    for i, text in enumerate(self.options):
+                        rect = self.rect_combo.copy()
+
+                        rect.y += (i+1) * self.rect_combo.height
+                        self.rectas_options.insert(i, rect)
+                        if len(self.rectas_options) > i+1:
+                            self.rectas_options.pop(i+1)
+
+                        pygame.draw.rect(self.win, self.color_menu, rect, 0)
+                        msg = self.base_font_2.render(text, 1, self.color_option)
+                        self.win.blit(msg, rect)
+                else:
+                    self.borrar_info(input_rect_1)
+
+            pygame.display.flip()
         
         pygame.quit()
         sys.exit()
+
+    def elegir_recorrido(self):
+        if self.eleccion == 'inorder':
+            if self.value != 'Inorder':
+                self.inorder()
+                self.value = 'Inorder'
+        elif self.eleccion == 'preorder':
+            if self.value != 'Preorder':
+                self.preorder()
+                self.value = 'Preorder'
+        elif self.eleccion == 'postorder':
+            if self.value != 'Postorder':
+                self.postorder()
+                self.value = 'Postorder'
 
     def validar_int(self, numero):
         try:
@@ -99,6 +256,9 @@ class arbol():
 
         while not self.terminar_1:
             for event in pygame.event.get():
+                if event.type == pygame.QUIT: 
+                    self.terminar_arbol = True
+                    self.terminar_1 = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE: 
                         self.user_text = self.user_text[:-1]
@@ -107,20 +267,28 @@ class arbol():
                     elif event.key == pygame.K_SPACE:
                         self.terminar_1 = True
                     else:
-                        self.user_text += event.unicode
-                        r = self.validar_int(self.user_text)
+                        r = self.validar_int(event.unicode)
+                        print(r)
+
+                        if r != False: 
+                            self.user_text += event.unicode
 
             pygame.draw.rect(self.win, (255,255,255), self.input_rect, 2)
             text_surface = self.base_font.render(self.user_text, True, (0,255,255))
             self.win.blit(text_surface, (350,10))
             pygame.display.flip()
 
-        self.numeros = r
+        self.numeros = int(self.user_text)
         print(self.numeros)
 
-    def input_value(self, input_rect_1, input_rect_2):
+    def separar_cadena(self):
+        separado = self.value_input.split(',')
+
+        for i in range(0, len(separado)-1):
+            self.insert(int(separado[i]))
+
+    def input_value(self, input_rect_1):
         terminar_value = False
-        value = ''
 
         while not terminar_value:
             for event in pygame.event.get():
@@ -128,205 +296,93 @@ class arbol():
                     terminar_value = True
                     return "Hola"
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE: 
+                    if event.key == pygame.K_COMMA:
+                        self.value_input += event.unicode
                         terminar_value = True
                     elif event.key == pygame.K_BACKSPACE: 
-                        value = value[:-1]
-                        self.borrar_info(input_rect_1, input_rect_2)
+                        self.value_input = self.value_input[:-1]
+                        self.win.fill((0,0,0))
+                        self.borrar_info(input_rect_1)
                     else:
-                        value += event.unicode
+                        numero = self.validar_int(event.unicode)
+                        print(numero)
+                        if numero != False: 
+                            print(event.unicode)
+                            self.value_input += event.unicode
 
-            text_surface_1 = self.base_font.render(value, True, (0,255,255))
+            text_surface_1 = self.base_font.render(self.value_input, True, (0,255,255))
             self.win.blit(text_surface_1, (210,50))
             pygame.display.flip()
 
-        self.ingresar_node(value, input_rect_1, input_rect_2)
+    def breadth_first_search(self):
+        contenedor_1 = [self.root]
+        contenedor_2 = [self.root.value]
+        xinicial = 450
+        yinicial = 100
+        x = xinicial
+        y = yinicial
+        resta = 170
+        self.draw_nodes(xinicial, yinicial, 0, 0, self.root.value)
+        cont = 0
 
-    def ingresar_node(self, value, input_rect_1, input_rect_2):
-        if value in self.nodes:
-            self.borrar_info(input_rect_1, input_rect_2)
-            self.input_value(input_rect_1, input_rect_2)
-        else: 
-            self.nodes.append(value)
+        while len(contenedor_1) != 0:
+            node = contenedor_1[0]
 
-    def input_father(self, input_rect_1, input_rect_2):
-        terminar_father = False
-        father = ''
+            if cont != 0: 
+                actual =  contenedor_1[0]
+                xinicial = actual[2]
+                yinicial = actual[1]
+                y = actual[1]+100
+                node = actual[0]
+            else: 
+                y = y + 100
+                node = contenedor_1[0]
 
-        while not terminar_father:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT: 
-                    terminar_father = True
-                    return "Hola"
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE: 
-                        terminar_father = True
-                    elif event.key == pygame.K_BACKSPACE: 
-                        father = father[:-1]
-                        self.borrar_info(input_rect_1, input_rect_2)
-                    else:
-                        father += event.unicode
+            if node.left_branch != None:
+                x = xinicial - resta
+                contenedor_1.append((node.left_branch, y, x))
+                contenedor_2.append(node.left_branch.value)
+                a = x
+                self.draw_nodes(x, y, xinicial, yinicial, node.left_branch.value)
+                x = xinicial
+                xinicial = a
+            else: 
+                x = xinicial
 
-            text_surface_2 = self.base_font.render(father, True, (0,255,255))
-            self.win.blit(text_surface_2, (730,50))
-            pygame.display.flip()
+            if node.rigth_branch != None:
+                r = x
+                x = x + resta
+                contenedor_1.append((node.rigth_branch, y, x))
+                contenedor_2.append(node.rigth_branch.value)
+                self.draw_nodes(x, y, r, yinicial, node.rigth_branch.value)
 
-        self.parents.append(father)
+            cont += 1
+            contenedor_1.pop(0)
 
-    def borrar_info(self, input_rect_1, input_rect_2, cont):
-        self.win.fill((0,0,0))
+            if resta > 50:
+                resta -= 15
+
+        return print(contenedor_2)
+
+    def draw_nodes(self, xinicial, yinicial, x, y, valor):
+        if yinicial > 100:
+            pygame.draw.line(self.win, (100,0,105), (x,y+10), (xinicial-5,yinicial+5), 4)
+
+        pygame.draw.circle(self.win, (100,10,255), (xinicial,yinicial), 20, 5)
+
+        text_surface = self.base_font.render(str(valor), True, (0,255,255))
+        self.win.blit(text_surface, (xinicial-5,yinicial-10))
+        
+        pygame.display.flip()
+
+    def borrar_info(self, input_rect_1):
         self.input_title()
         self.input_value_and_father()
         pygame.draw.rect(self.win, (255,255,255), self.input_rect, 2)
         pygame.draw.rect(self.win, (255,255,255), input_rect_1, 2)
-        pygame.draw.rect(self.win, (255,255,255), input_rect_2, 2)
         text_surface = self.base_font.render(self.user_text, True, (0,255,255))
-        print('A borrar')
-        self.draw_nodes_actual()
         self.win.blit(text_surface, (350,10))
-
-    def ubicacion_father(self, value):
-        i = 0
-        listo = False
-
-        while listo == False and i < len(self.nodes): 
-            if self.nodes[i] == value: 
-                listo = True
-                return self.ubicacion[i]
-            i += 1
-
-    def draw_nodes_actual(self):
-        for i in range(len(self.nodes)):
-            posicion_actual = self.ubicacion[i]
-            pygame.draw.circle(self.win, (100,10,255), posicion_actual, 20, 5)
-
-            if self.parents[i] != 'None':
-                posicion_inicial = self.ubicacion_father(self.parents[i])
-                pygame.draw.line(self.win, (100,0,105), (posicion_inicial[0]-5,posicion_inicial[1]+10), (posicion_actual[0],posicion_actual[1]-10), 4)
-
-            texto = self.nodes[i]
-            text_surface = self.base_font.render(texto, True, (0,255,255))
-            self.win.blit(text_surface, (posicion_actual[0]-5,posicion_actual[1]-10))
-            pygame.display.flip()
-
-    def draw_node(self, actual):
-        i = 0
-        x = 450
-        y = 100
-
-        while i <= actual:
-            if self.parents[i] == 'None':
-                pygame.draw.circle(self.win, (100,10,255), (x, y), 20, 5)
-                texto = self.nodes[i]
-                text_surface = self.base_font.render(texto, True, (0,255,255))
-                self.win.blit(text_surface, (x-5,90))
-                self.ubicacion.append((x, y))
-                self.son_father_draw(self.nodes[i], x, y)
-            
-            i += 1
-            pygame.display.flip()
-
-    def out_range(self):
-        text = '---------- NO HAY NODO RAIZ -------------'
-        text_surface = self.base_font.render(text, True, (255,0,0))
-        self.win.blit(text_surface, (170,self.alto-20))
-        pygame.display.flip()
-
-    def son_father_draw(self, value, xinicial, yinicial):
-        distancia = 100
-        y = yinicial + distancia
-        suma = y/100
-        x = xinicial - (suma*100)
-
-        for i in range(len(self.parents)):
-            
-            if value == self.parents[i]:
-                posicion = self.insert_posicion(i, x, y)
-                pygame.draw.circle(self.win, (100,10,255), posicion, 20, 5)
-                pygame.draw.line(self.win, (100,0,105), (xinicial-5,yinicial+10), (posicion[0],posicion[1]-10), 4)
-                texto = self.nodes[i]
-                text_surface = self.base_font.render(texto, True, (0,255,255))
-                self.win.blit(text_surface, (x-5,y-10))
-
-                self.son_father_draw( self.nodes[i], posicion[0], posicion[1])
-                x += ((suma*100)+250)
-
-                pygame.display.flip()
-
-    def son_padre(self, value, xinicial, yinicial):
-        y = yinicial+100
-        algo_2 = 0
-        algo = self.verifica_ubicacion(y)
-        x = xinicial
-        if algo > 1 :
-            x -= (100*algo)
-        else: 
-            x -= 100
-
-        for i in range(len(self.parents)):
-
-            if value == self.parents[i]:
-                print(algo, ' algo ', x, 'nodo', self.nodes[i])
-
-                pygame.draw.circle(self.win, (100,10,255), (x,y), 20, 5)
-                self.ubicacion.insert(i, (x, y))
-
-                if len(self.ubicacion) > i+1:
-                    self.ubicacion.pop(i+1)
-
-                pygame.draw.line(self.win, (100,0,105), (xinicial-5,yinicial+10), (x,y-10), 4)
-                texto = self.nodes[i]
-                text_surface = self.base_font.render(texto, True, (0,255,255))
-                self.win.blit(text_surface, (x-5,y-10))
-                
-                pygame.display.flip()
-
-                self.son_padre(self.nodes[i], x, y) 
-
-                algo_2 = self.verifica_ubicacion_2(y, i)
-                if algo_2 > 1 :
-                    x += (100*algo_2)
-                else: 
-                    x += 100
-
-    def verifica_ubicacion(self, y):
-        cont = 0
-        x = 0
-
-        for i in range(len(self.ubicacion)):
-            actual = self.ubicacion[i]
-            if actual[1] == y: 
-                cont += 1
-
-        if cont > 3: 
-            x = (150*cont)
-        else: 
-            x = 100
-
-        return x
-
-    def insert_posicion(self, i, x, y):
-        self.ubicacion.insert(i, (x, y))
-
-        while len(self.ubicacion) > i+1:
-            self.ubicacion.pop(i+1)
-        
-        print(i, 'ki', self.ubicacion[i-1])
-        print(self.ubicacion[i])
-        return self.ubicacion[i]
-
-    def verifica_ubicacion_2(self, y, actual_index):
-        cont = 0
-        i = 0
-
-        while i < len(self.ubicacion) and i < actual_index:
-            actual = self.ubicacion[i]
-            if actual[1] == y: 
-                cont += 1
-            
-            i += 1
-
-        return cont
+        self.borrar_informacion_combobox(False)
 
 
 

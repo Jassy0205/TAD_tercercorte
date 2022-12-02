@@ -1,80 +1,161 @@
-class Tree: 
-    class csll: 
-        class Node: 
-            #Creamos el metodo inicializador de la clase nodo
-            def __init__(self, value, father): 
-                self.value = value
-                self.father = father
-                self.son = None
-                self.next = None
+class binary_search_tree:
+    class Node:
+        def __init__(self, value):
+            self.value = value
+            self.left_branch = None
+            self.rigth_branch = None
 
-        #Ingreso a la clase sll y creamos el metodo inicializador 
-        def __init__(self): 
-            self.head = None
-            self.tail = None
-            self.length = 0
+    def __init__(self):
+        self.root = None
+        self.length = None
 
-        #Creamos el metodo append para añadir al final del nodo 
-        def append(self, value, father): 
-            new_node = self.Node(value, father)
+    def insert(self, value):
+        new_node = self.Node(value)
 
-            if self.head == None and self.tail == None: 
-                self.head = new_node
-                self.tail = new_node
-                self.tail.next = self.head
-            else: 
-                self.tail.next = new_node
-                new_node.next = self.head
-                self.tail = new_node
-            self.length += 1
+        if self.root == None:
+            self.root = new_node
+        else:
+            def tree_route(value, node):
+                if value == node.value:
+                    return "El elemento ya existe"
+                
+                elif value < node.value:
+                    if node.left_branch == None:
+                        node.left_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.left_branch)
 
-    #Salgo de la clase SLL y entro a la clase Tree
-    def __init__(self): 
-        self.root = None 
-        self.length = 0
+                elif value > node.value:
+                    if node.rigth_branch == None:
+                        node.rigth_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.rigth_branch)
 
-    def insert(self, value, father):
-        if self.root is None:
-            self.root = self.csll()
-            self.root.append(value, None)
-        else: 
-            current_node = self.root.head
-            return self.tree_route(value, father, current_node)
+            tree_route(value, self.root)
 
-    def tree_route(self, value, father, node, comparision_node_value=None):
-        auxiliar_node = node.father
-        if value == father: 
-            print('El nodo ya existe')
-        elif node.value == father: 
-            if node.son == None: 
-                node.son = self.csll() 
-                node.son.append(value, node.value)
-            else: 
-                node.son.append(value, node)
-            self.length += 1
-            print(value,'->', node.value)
-            return True 
-        else: 
-            if node.son != None: 
-                if node.son.head.value is comparision_node_value: 
-                    if node.value is self.root.head.value: #node.son.head.value: 
-                        print('Valores duplicados')
-                    elif node.next.value is not auxiliar_node.son.head.value:
-                        return self.tree_route(value, father, node.next, node.value)
-                    else: 
-                        return self.tree_route(value, father, node.father, node.next.value)
+    def find(self, value):
+        def tree_route(value, node):
+            if value == node.value:
+                return node.value
+            elif value < node.value:
+                if node.left_branch == None:
+                    return "No existe el elemento buscado"
                 else:
-                    return self.tree_route(value, father, node.son.head, node.son.head.value)
-            elif node.next.value != auxiliar_node.son.head.value:
-                return self.tree_route(value, father, node.next, node.value)
+                    return tree_route(value, node.left_branch)
             else:
-                return self.tree_route(value, father, node.father, node.next.value)
-                '''elif node.next.value is not auxiliar_node.son.head.value:
-                    return self.tree_route(value, father, node.next, node.value)
-                else: 
-                    return self.tree_route(value, father, node.father, node.next.value)'''
+                if node.rigth_branch == None:
+                    return "No existe el elemento buscado"
+                else:
+                    return tree_route(value, node.rigth_branch)
+        node_find = tree_route(value, self.root)
+        return print(node_find)
 
+    def delete(self, value):
+        def tree_route(value, node, previous_node):
+            if value == node.value:
+                if node.left_branch == None and node.rigth_branch == None:
+                    if previous_node.left_branch != None:
+                        if previous_node.left_branch.value == node.value:
+                            previous_node.left_branch = None
+                    if previous_node.rigth_branch != None:
+                        if previous_node.rigth_branch.value == node.value:
+                            previous_node.rigth_branch = None
+                    node = None
+                elif node.left_branch == None and node.rigth_branch != None:
+                    if previous_node.left_branch != None:
+                        if previous_node.left_branch.value == node.value:        
+                            previous_node.left_branch = node.rigth_branch
+                    if previous_node.rigth_branch != None:
+                        if previous_node.rigth_branch.value == node.value:
+                            previous_node.rigth_branch = node.rigth_branch
+                elif node.rigth_branch == None and node.left_branch != None:
+                    if previous_node.left_branch != None:
+                        if previous_node.left_branch.value == node.value:
+                            previous_node.left_branch = node.left_branch
+                    if previous_node.rigth_branch != None:
+                        if previous_node.rigth_branch.value == node.value:
+                            previous_node.rigth_branch = node.left_branch
+                else:
+                    node_comodin = None
+                    previous_node = node
+                    node = node.rigth_branch
+                    #--Codigo agregado aun no explicado Inicio--
+                    if node.left_branch == None and node.rigth_branch != None:
+                        previous_node.value = node.value
+                        previous_node.rigth_branch = node.rigth_branch
+                    elif node.left_branch == None and node.rigth_branch == None:
+                        previous_node.value = node.value
+                        previous_node.rigth_branch = None
+                    #--Codigo agregado aun no explicado Fin--
+                    else:
+                        while node.left_branch != None:
+                            node_comodin = node
+                            node = node.left_branch
+                        previous_node.value = node.value
+                        if node.rigth_branch != None:
+                            node_comodin.left_branch = node.rigth_branch
+                        else:
+                            node_comodin.left_branch = None
+                    node = None
+            elif value < node.value:
+                if node.left_branch == None:
+                    return "No existe el elemento buscado"
+                else:
+                    return tree_route(value, node.left_branch, node)
+            else:
+                if node.rigth_branch == None:
+                    return "No existe el elemento buscado"
+                else:
+                    return tree_route(value, node.rigth_branch, node)
+        tree_route(value, self.root, self.root)
 
+    def preorder(self):
+        contenedor = []
+        def tree_route(node):
+            contenedor.append(node.value)
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+        return print(contenedor)
 
+    def inorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            contenedor.append(node.value)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+        return print(contenedor)
 
+    def postorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+            contenedor.append(node.value)
+        tree_route(self.root)
+        return print(contenedor)
 
+    def breadth_first_search(self):
+        contenedor_1 = [self.root]
+        contenedor_2 = [self.root.value]
+        while len(contenedor_1) != 0:
+            node = contenedor_1[0]
+            if node.left_branch != None:
+                contenedor_1.append(node.left_branch)
+                contenedor_2.append(node.left_branch.value)
+            if node.rigth_branch != None:
+                contenedor_1.append(node.rigth_branch)
+                contenedor_2.append(node.rigth_branch.value)
+            contenedor_1.pop(0)
+        return print(contenedor_2)
+
+bst = binary_search_tree()

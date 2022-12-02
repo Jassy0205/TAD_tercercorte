@@ -1,7 +1,6 @@
 import pygame
 import sys
 import random
-from Taller03_corte03 import arbol
 
 class barajas():
     #Se crea la clase nodo
@@ -10,6 +9,14 @@ class barajas():
         def __init__(self, valor):
             self.valor = valor
             self.nodo_siguiente = None
+
+    #Se crea la clase nodo del arbol
+    class Node:
+        #Se hace el metodo incializador de la clase nodo
+        def __init__(self, value):
+            self.value = value
+            self.left_branch = None
+            self.rigth_branch = None
 
     #Se hace el metodo incializador de la clase barajas
     def __init__(self):
@@ -21,27 +28,39 @@ class barajas():
         self.cola = None
         self.tamaño = 0
 
-        self.alto = 500
-        self.ancho = 1070
+        self.alto = 850
+        self.ancho = 910
         self.terminar = False
         self.terminar_1 = False
         self.terminar_arbol = False
+        self.terminar_combo = False
+        self.terminar_grafo = False
 
         #variable creada para guardar la información de la posición
         #en la que estaba la imagen que se está moviendo
         self.posicion_inicial = None
 
         #Se establecen las inscripciones que tendrán los input para el arbol
-        self.base = 'Noodos del arbol: '
+        self.base = 'Cantidad de nodos del arbol: '
         self.value = 'Valor del nodo: '
-        self.father = 'Valor del padre: '
-        self.input_rect = pygame.Rect(346, 5, 100, 30)
+        self.input_rect =  pygame.Rect(346, 5, 160, 30)
 
         #Se crean las variables que serán utilizadas para el arbol
         self.user_text = ''
+        self.value_input = ''
         self.numeros = 0
-        self.nodes = []
-        self.parents = []
+        self.base_font_2 = pygame.font.Font(None, 23)
+        self.root = None
+        self.length = None
+        self.color_menu = (255, 255, 255)
+        self.color_option = (0, 0, 0)
+        self.rect_combo = pygame.Rect(550, 5, 100, 25) 
+        self.options = ['inorder', 'preorder', 'postorder', 'amplitud']
+        self.draw_menu = False
+        self.rectas_options = []
+        self.eleccion = None
+        self.reccorrido = ''
+        self.cont_arbol = 0
 
         #Se establecen la inscripción que tendrán los botones
         self.base1 = 'Pilas'
@@ -70,6 +89,7 @@ class barajas():
         self.rect5 = pygame.Rect(460, 200, 95, 166)
         self.rect6 = pygame.Rect(570, 200, 95, 166)
         self.rect7 = pygame.Rect(680, 200, 95, 166)
+        self.r1 = pygame.Rect(350, 10, 95, 166)
 
         #Se crea el vector que guardará las copias que han sido creadas en el metodo posterior
         self.vector_copy_imagenes = []
@@ -86,6 +106,7 @@ class barajas():
         self.pila5 = []
         self.pila6 = []
         self.pila7 = []
+        self.pila8 = []
 
         #Se crea la variable que guarda la posición de la carta que será girada
         self.voltear = None
@@ -98,6 +119,7 @@ class barajas():
         self.mov_pila5 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
         #Se crean unos contadores para llevar una noción del numero de cartas disponibles en cada pila
         self.cont_pila1 = 3
@@ -107,19 +129,50 @@ class barajas():
         self.cont_pila5 = 3
         self.cont_pila6 = 3
         self.cont_pila7 = 3
+        self.cont_pila8 = 0
         
         #variable utilizada para guardar la información de la imagen extraida de las pilas inferiores
         self.tam_image_2 = None
         self.imagen_mov = None
+
+        #variables para grafos
+        self.combo_1 = 'Ciudad origen'
+        self.draw_menu_1 = False
+        self.rect_combo_1 = pygame.Rect(30, 70, 100, 25) 
+        self.eleccion_1 = None
+        self.rectas_options_1 = []
+
+        self.combo_2 = 'Ciudad destino'
+        self.draw_menu_2 = False
+        self.rect_combo_2 = pygame.Rect(190, 70, 100, 25) 
+        self.eleccion_2 = None
+        self.rectas_options_2 = []
+
+        self.img_mapa = pygame.image.load("MapaColombia.jpg")
+        self.tam_mapa_rect =  None
+
+        self.ciudades = ['San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena',
+                            'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Riohacha',
+                            'Santa Marta', 'Valledupar', 'Villavicencio']
+        self.relaciones = []
+        self.rectas_ciudades = []
+        self.grafos = []
+        self.otros = []
+
+        self.negro = (0,0,0)
+        self.blanco = (255,255,255)
+        self.rojo = (100,30,22)
 
         #Se le da el tipo de letra y el tamaño de la letra que será utilizada para los botones
         self.base_font = pygame.font.Font(None, 32)
 
         #Se dibuja la ventana con las especificaciones de ancho y alto establecidas 
         # y se le da el color negro 
-        self.win = pygame.display.set_mode([self.ancho, self.alto])
+        self.win = pygame.display.set_mode((self.ancho, self.alto))
         self.win.fill((0,0,0))
 
+    #Se hace un metodo que carga las imagenes necesarias para desarrollar la pila
+    # y las ingresa a un vector 
     def carga_imagenes(self):
         #Se instancian a cada una de las imagenes
         self.imgA = pygame.image.load("a.jpg")
@@ -207,88 +260,6 @@ class barajas():
 
         return array
 
-    #Metodo que agrega todas las cartas a la pila
-    def crear_pila(self):
-        self.stack(self.imgA)
-        self.n_cartas -= 1
-
-        self.stack(self.imgk)
-        self.n_cartas -= 1
-
-        self.stack(self.imgq)
-        self.n_cartas -= 1
-
-        self.stack(self.imgj)
-        self.n_cartas -= 1
-
-        self.stack(self.img10)
-        self.n_cartas -= 1
-
-        self.stack(self.img9)
-        self.n_cartas -= 1
-
-        self.stack(self.img8)
-        self.n_cartas -= 1
-
-        self.stack(self.img7)
-        self.n_cartas -= 1
-
-        self.stack(self.img6)
-        self.n_cartas -= 1
-
-        self.stack(self.img5)
-        self.n_cartas -= 1
-
-        self.stack(self.img4)
-        self.n_cartas -= 1
-
-        self.stack(self.img3)
-        self.n_cartas -= 1
-
-        self.stack(self.img2)
-        self.n_cartas -= 1
-
-    #Se crea un metodo para mostrar los nodos de la pila
-    def mostrar_pila_4filas(self, array, pila):
-        top = 60
-        espaciado = 310
-
-        left1 = self.ancho - 450
-        refl = left1
-        reft = 0
-        cont = 0
-
-        for i in range(len(array)-1, -1, -1):
-            if i == 0:
-                tam_image = array[i].get_rect()
-                tam_image.left = (refl+espaciado)+(26)   
-                tam_image.top = reft+36
-            else: 
-                if i == (0+4):
-                    left1 -= 36
-
-                reft = top
-                if cont < 3: 
-                    tam_image = array[i].get_rect()
-                    tam_image.left = left1         
-                    tam_image.top = top
-
-                    top += 36
-                    left1 += 26
-                    cont += 1
-                elif cont == 3: 
-                    tam_image = array[i].get_rect()
-                    tam_image.left = left1         
-                    tam_image.top = top
-
-                    left1 = refl-espaciado
-                    top = 60
-                    cont = 0
-
-                refl = left1
-
-            self.win.blit(array[i], tam_image)
-
     #Se crea un metodo que cree los botones, y realice las funciones según el botón que sea seleccionado
     def jugar_cartas(self, numero_cartas):
         self.n_cartas = numero_cartas
@@ -315,91 +286,255 @@ class barajas():
 
                     elif self.input_rect2.collidepoint(pygame.mouse.get_pos()):
                         self.terminar_arbol = False
-                        self.win.fill((255,255,255))
+                        self.win.fill((0,0,0))
                         self.input_information()
                         self.win.fill((0,0,0))
                         self.crear_botones()
                         self.cartas_apiladas(numero_cartas)
 
                     elif self.input_rect3.collidepoint(pygame.mouse.get_pos()):
-                        print("Clic Grafos")
+                        self.terminar_grafo = False
+                        self.win.fill((0,0,0))
+                        self.inicio_juego()
+                        self.win.fill((0,0,0))
+                        self.crear_botones()
+                        self.cartas_apiladas(numero_cartas)
 
             pygame.display.flip()
         
         pygame.quit()
         sys.exit()
 
-    #Se crea un metodo que muestre haga todo el procedo de crear la pila, y mostrarla
-    def proceso_pila(self, cont_pila, tam_pila, btn_cola, n_cartas):
-        self.win.fill((0,0,0))
-        if cont_pila == 0:
-            self.crear_pila()
-            self.crear_botones()
-            self.cartas_apiladas(self.n_cartas)
-            if btn_cola == False: 
-                tam_pila = self.mostrar_cola1(n_cartas)
-            self.mostrar_pila_4filas(tam_pila, True)
-        else: 
-            if cont_pila%2 == 0: 
-                self.crear_botones()
-                self.mostrar_pila_4filas(tam_pila, True)
-            else: 
-                self.crear_botones()
-                self.cartas_apiladas(13)
-        cont_pila += 1
-
-        return tam_pila
-
-
     #-------------------------------- Arbol -------------------------------
+
+    #Metodo que dibuja el combobox en pantalla
+    def combo_draw(self):
+        pygame.draw.rect(self.win, self.color_menu, self.rect_combo, 0)
+        self.img = pygame.image.load("descarga.png")
+        self.rect_2 = pygame.Rect(550, 5, 100, 25) 
+        self.rect_2.left += 100
+        self.win.blit(self.img, self.rect_2)
+
+    #metodo que después de haberse extendido el combobox, lo dibuja de nuevo
+    #y de haberse escogido algunas de las opciones del combobox, la coloca arriba
+    def borrar_informacion_combobox(self, desplegado):
+        self.combo_draw()
+
+        if self.eleccion != None: 
+            msg = self.base_font_2.render(self.eleccion, 1, (0, 0, 0))
+            self.win.blit(msg, self.rect_combo)
+
+    #Se crea un metodo que inserta cada valor de ingresado como equivalencia
+    #a los nodos en una lista con la estructura de un arbol binario
+    def insert(self, value):
+        new_node = self.Node(value)
+
+        if self.root == None:
+            self.root = new_node
+        else:
+            def tree_route(value, node):
+                if value == node.value:
+                    return "El elemento ya existe"
+
+                elif value < node.value:
+                    if node.left_branch == None:
+                        node.left_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.left_branch)
+
+                elif value > node.value:
+                    if node.rigth_branch == None:
+                        node.rigth_branch = new_node
+                        return True
+                    else:
+                        return tree_route(value, node.rigth_branch)
+                        
+            tree_route(value, self.root)
+
+    #Metodo que retorna una lista con los valores de los nodos en preorder 
+    def preorder(self):
+        contenedor = []
+        def tree_route(node):
+            contenedor.append(node.value)
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('preorder', contenedor)
+
+    #Metodo que retorna una lista con los valores de los nodos en preorder 
+    def amplitud(self):
+        contenedor_1 = [self.root]
+        contenedor_2 = [self.root.value]
+        while len(contenedor_1) != 0:
+            node = contenedor_1[0]
+            if node.left_branch != None:
+                contenedor_1.append(node.left_branch)
+                contenedor_2.append(node.left_branch.value)
+            if node.rigth_branch != None:
+                contenedor_1.append(node.rigth_branch)
+                contenedor_2.append(node.rigth_branch.value)
+            contenedor_1.pop(0)
+        
+        self.imprimir_recorrido(contenedor_2)
+        return print(contenedor_2)
+
+    #Metodo que muestra en pantalla el recorrido (en forma de lista) que se haya elegido
+    #la lista ya traída de los metodos de preorder, inorder o postorder entra como parametro
+    def imprimir_recorrido(self, contenedor):
+        self.reccorrido = ''
+        for i in range(len(contenedor)):
+            self.reccorrido += str(contenedor[i])
+            if i != len(contenedor) -1:
+                self.reccorrido += ','
+
+        text_surface = self.base_font.render(self.reccorrido, True, (0,255,255))
+        self.win.blit(text_surface, (210,50))
+
+    #Metodo que retorna una lista con los valores de los nodos en inorder 
+    def inorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            contenedor.append(node.value)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('inorder', contenedor)
+
+    #Metodo que retorna una lista con los valores de los nodos en postorder 
+    def postorder(self):
+        contenedor = []
+        def tree_route(node):
+            if node.left_branch != None:
+                tree_route(node.left_branch)
+            if node.rigth_branch != None:
+                tree_route(node.rigth_branch)
+            contenedor.append(node.value)
+        tree_route(self.root)
+
+        self.imprimir_recorrido(contenedor)
+        return print('postorder', contenedor) 
 
     #Se crea una función que imprima el titulo del primer input: El número de nodos a dibujar
     def input_title(self):
-        text_surface = self.base_font.render(self.base, True, (100,30,22))
+        text_surface = self.base_font.render(self.base, True, (255,255,50))
         self.win.blit(text_surface, (30,10))
 
-    #función que imprima el titulo de los dos input siguientes: 
-    #valor del nodo hijo y el valor del padre
+    #función que imprima el titulo del input de los valores de los nodos
     def input_value_and_father(self):
-        text_surface = self.base_font.render(self.value, True, (100,30,22))
+        text_surface = self.base_font.render(self.value, True, (255,255,50))
         self.win.blit(text_surface, (30,50))
-
-        text_surface = self.base_font.render(self.father, True, (100,30,22))
-        self.win.blit(text_surface, (550,50))
 
     #Función que acciona todo el proceso del arbol
     def input_information(self):
         self.input_title()
         self.input_nodes()
-        input_rect_1 = pygame.Rect(200, 45, 50, 30)
-        input_rect_2 = pygame.Rect(720, 45, 80, 30)
-        cont = 0
+        input_rect_1 = pygame.Rect(200, 45, 310, 30)
+        self.combo_draw()
+        cont_1 = 0
 
         while not self.terminar_arbol:
             for event in pygame.event.get():
 
-                if event.type == pygame.QUIT: 
-                    self.terminar_arbol = True
+                if event.type == pygame.QUIT:  self.terminar_arbol = True
 
-                while cont < self.numeros:
+                #se verifica que el numero de valores ingresado sea equivalente al numero de nodos
+                while self.cont_arbol < self.numeros:
                     self.input_value_and_father()
-                    pygame.draw.rect(self.win, (0,0,0), input_rect_1, 2)
-                    pygame.draw.rect(self.win,  (0,0,0), input_rect_2, 2)
+                    pygame.draw.rect(self.win, (255,255,255), input_rect_1, 2)
 
-                    i = self.input_value(input_rect_1, input_rect_2)
-                    j = self.input_father(input_rect_1, input_rect_2)
-                    self.draw_nodes()
+                    i = self.input_value(input_rect_1)
 
-                    if j == "Hola" or i == "Hola": 
+                    if  i == "Hola": 
                         cont = self.numeros
-                    elif j == True: 
-                        cont += 1
 
-                    self.borrar_info(input_rect_1, input_rect_2)
+                    self.cont_arbol += 1
 
-                print(self.nodes)
-                print(self.parents)
-                self.draw_nodes()
+                #Se llama un metodo que separa el string con los valores de los nodos y los ingresa a un vector
+                self.separar_cadena()
+                #Se llama al metodo que establecerá la posición de los nodos y los dibujará
+                self.breadth_first_search()
+
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos() 
+
+                    #Se verifica que la ubicación del mouse esté sobre la recta del combobox
+                    if mouse_pos[0] >= self.rect_2.left and mouse_pos[0] <= self.rect_2.left+25:
+                        #Se lleva una cuenta de los clicks para verificar el despliegue del menú
+                        if cont_1 == 0 or cont_1%2 == 0:
+                            self.draw_menu = True
+                        else:
+                            self.win.fill((0,0,0))
+                            self.borrar_info(input_rect_1)
+                            self.draw_menu = False
+                        cont_1+= 1
+
+                    else:
+                        #Se verifica que el menú del 'combobox' esté desplegado
+                        if self.draw_menu == True:
+
+                            i = 0
+                            #Se recorren las opciones posibles
+                            while i <= len(self.rectas_options)-1:
+                                actual = self.rectas_options[i]
+
+                                #Se verifica que la posición del mouse esté sobre la recta de la opción actual
+                                if mouse_pos[1] <= actual.top+20 and mouse_pos[1] >= actual.top and mouse_pos[0] <= actual.left+90 and mouse_pos[0] >= actual.left:
+                                    self.win.fill((0,0,0))
+                                    self.eleccion = self.options[i]
+                                    self.elegir_recorrido()
+                                    self.borrar_info(input_rect_1)
+                                    self.draw_menu = False
+                                i+=1
+
+                #Se verifica que se quieran desplegar las opciones del combobox
+                if self.draw_menu:
+                    for i, text in enumerate(self.options):
+                        rect = self.rect_combo.copy()
+                        
+                        #Se va aumentando el valor de y de la recta a medida que se pasa a la opción siguiente
+                        rect.y += (i+1) * self.rect_combo.height
+                        #Se agrega la posición de cada opción posibre a un vector
+                        self.rectas_options.insert(i, rect)
+                        #y se verifica el tamaño de la lista para en caso de haber más de las 
+                        #necesarias, eliminar el excedente 
+                        if len(self.rectas_options) > i+1:
+                            self.rectas_options.pop(i+1)
+
+                        pygame.draw.rect(self.win, self.color_menu, rect, 0)
+                        msg = self.base_font_2.render(text, 1, self.color_option)
+                        self.win.blit(msg, rect)
+                else:
+                    self.borrar_info(input_rect_1)
+
+            pygame.display.flip()
+
+    #Se crea un metodo que valide la eleccion del recorrido que se desee realizar
+    def elegir_recorrido(self):
+        if self.eleccion == 'inorder':
+            if self.value != 'Inorder':
+                self.inorder()
+                self.value = 'Inorder'
+        elif self.eleccion == 'preorder':
+            if self.value != 'Preorder':
+                self.preorder()
+                self.value = 'Preorder'
+        elif self.eleccion == 'postorder':
+            if self.value != 'Postorder':
+                self.postorder()
+                self.value = 'Postorder'
+        elif self.eleccion == 'amplitud':
+            if self.value != 'Amplitud':
+                self.amplitud()
+                self.value = 'Amplitud'
 
     #Se crea un metodo que valide que el dato ingresado corresponda a un valor entero
     def validar_int(self, numero):
@@ -415,49 +550,42 @@ class barajas():
 
         while not self.terminar_1:
             for event in pygame.event.get():
+                if event.type == pygame.QUIT: 
+                    self.terminar_arbol = True
+                    self.terminar_1 = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE: 
                         self.user_text = self.user_text[:-1]
-                        self.win.fill((255,255,255))
+                        self.win.fill((0,0,0))
                         self.input_title()
                     elif event.key == pygame.K_SPACE:
-                        r = self.validar_int(self.user_text)
-                        if r != False:
-                            self.terminar_1 = True
-                        else: 
-                            self.user_text = self.user_text[:-1]
-                            self.win.fill((255,255,255))
-                            self.input_title()
+                        self.terminar_1 = True
                     else:
-                        self.user_text += event.unicode
+                        r = self.validar_int(event.unicode)
+                        print(r)
 
-            pygame.draw.rect(self.win, (0,0,0), self.input_rect, 2)
-            text_surface = self.base_font.render(self.user_text, True, (28,40,51))
+                        if r != False: 
+                            self.user_text += event.unicode
+
+            pygame.draw.rect(self.win, (255,255,255), self.input_rect, 2)
+            text_surface = self.base_font.render(self.user_text, True, (0,255,255))
             self.win.blit(text_surface, (350,10))
             pygame.display.flip()
 
-        self.numeros = r
+        self.numeros = int(self.user_text)
         print(self.numeros)
 
-    def validar_nodo_cabeza(self, father):
-        padre = father.lower()
-        print(padre, 'g', len(self.nodes))
+    #Metodo que separa los valores de los nodos ingresados, 
+    #dividiendo el string utilizando el separador ','
+    def separar_cadena(self):
+        separado = self.value_input.split(',')
 
-        if len(self.nodes) == 1:
-            if padre == "n" or padre == "none":
-                self.parents.append(father)
-                return True 
-            else:
-                self.out_range()
-                self.nodes = []
-                return False
-        elif self.parents[0] == 'n' or self.parents[0] == 'none':
-            self.parents.append(father)
+        for i in range(0, len(separado)-1):
+            self.insert(int(separado[i]))
 
     #Metodo que reciba la información del input del valor del nodo a ingresar
-    def input_value(self, input_rect_1, input_rect_2):
+    def input_value(self, input_rect_1):
         terminar_value = False
-        value = ''
 
         while not terminar_value:
             for event in pygame.event.get():
@@ -465,130 +593,523 @@ class barajas():
                     terminar_value = True
                     return "Hola"
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE: 
+                    if event.key == pygame.K_COMMA:
+                        self.value_input += event.unicode
                         terminar_value = True
                     elif event.key == pygame.K_BACKSPACE: 
-                        value = value[:-1]
-                        self.borrar_info(input_rect_1, input_rect_2)
+                        self.value_input = self.value_input[:-1]
+                        self.win.fill((0,0,0))
+                        self.borrar_info(input_rect_1)
                     else:
-                        value += event.unicode
+                        numero = self.validar_int(event.unicode)
+                        print(numero)
+                        if numero != False: 
+                            print(event.unicode)
+                            self.value_input += event.unicode
 
-            text_surface_1 = self.base_font.render(value, True, (27,48,49))
+            text_surface_1 = self.base_font.render(self.value_input, True, (0,255,255))
             self.win.blit(text_surface_1, (210,50))
             pygame.display.flip()
 
-        self.ingresar_node(value, input_rect_1, input_rect_2)
-
-    #Se verifica que el nuevo noodo que se desea ingresar no esté ya incorporado en la lista
-    def ingresar_node(self, value, input_rect_1, input_rect_2):
-        if value in self.nodes:
-            self.borrar_info(input_rect_1, input_rect_2)
-            self.input_value(input_rect_1, input_rect_2)
-        else: 
-            self.nodes.append(value)
-
-    #Metodo que reciba la información del input del valor del nodo padre
-    # del nuevo nodo a ingresar
-    def input_father(self, input_rect_1, input_rect_2):
-        terminar_father = False
-        father = ''
-
-        while not terminar_father:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT: 
-                    terminar_father = True
-                    return "Hola"
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE: 
-                        terminar_father = True
-                    elif event.key == pygame.K_BACKSPACE: 
-                        father = father[:-1]
-                        self.borrar_info(input_rect_1, input_rect_2)
-                    else:
-                        father += event.unicode
-
-            text_surface_2 = self.base_font.render(father, True, (27,48,49))
-            self.win.blit(text_surface_2, (730,50))
-            pygame.display.flip()
-
-        #self.parents.append(father)
-        r = self.validar_nodo_cabeza(father)
-        return r
-
-    #Metodo que resetee las cuadriculas de los input de value y padre
-    def borrar_info(self, input_rect_1, input_rect_2):
-        self.win.fill((255,255,255))
-        self.input_title()
-        self.input_value_and_father()
-        pygame.draw.rect(self.win, (0,0,0), self.input_rect, 2)
-        pygame.draw.rect(self.win, (0,0,0), input_rect_1, 2)
-        pygame.draw.rect(self.win, (0,0,0), input_rect_2, 2)
-        text_surface = self.base_font.render(self.user_text, True, (28,40,51))
-        self.win.blit(text_surface, (350,10))
-        self.draw_nodes()
-
-    #Metodo que busca y dibuja a la raíz del arbol 
-    def draw_nodes(self):
-        x = 300
-        y = 160
-        listo = False
+    #Metodo que estable la ubicacion de los nodos, y llama a la función que los dibuja
+    def breadth_first_search(self):
+        contenedor_1 = [self.root]
+        contenedor_2 = [self.root.value]
+        xinicial = 450
+        yinicial = 100
+        x = xinicial
+        y = yinicial
+        resta = 170
+        self.draw_nodes(xinicial, yinicial, 0, 0, self.root.value)
         cont = 0
-        i = 0
 
-        while not listo and len(self.nodes) >= 1 and len(self.parents) >= 1:
-            if self.parents[i] == 'n' or self.parents[i] == 'none':
-                pygame.draw.circle(self.win, (100,10,255), (400,100), 20, 5)
-                texto = self.nodes[i]
-                text_surface = self.base_font.render(texto, True, (0,255,255))
-                self.win.blit(text_surface, (392,90))
-                self.son_padre(self.nodes[i], 400, 100)
-                listo = True
-                cont += 1
-            elif cont == 0 and i == len(self.parents)-1:
-                cont += 1
-                #self.out_range()
-                listo = True
+        while len(contenedor_1) != 0:
+            node = contenedor_1[0]
 
-            i += 1
-            pygame.display.flip()
+            if cont != 0: 
+                actual =  contenedor_1[0]
+                xinicial = actual[2]
+                yinicial = actual[1]
+                y = actual[1]+100
+                node = actual[0]
+            else: 
+                y = y + 100
+                node = contenedor_1[0]
 
-    #Imprime un mensaje en la interfaz grafica si no se ingresa un nodo "raíz" al arbol
-    def out_range(self):
-        text = '---------- NO HAY NODO RAIZ -------------'
-        text_surface = self.base_font.render(text, True, (255,0,0))
-        self.win.blit(text_surface, (150,self.alto-20))
+            if node.left_branch != None:
+                x = xinicial - resta
+                contenedor_1.append((node.left_branch, y, x))
+                contenedor_2.append(node.left_branch.value)
+                a = x
+                self.draw_nodes(x, y, xinicial, yinicial, node.left_branch.value)
+                x = xinicial
+                xinicial = a
+            else: 
+                x = xinicial
+
+            if node.rigth_branch != None:
+                r = x
+                x = x + resta
+                contenedor_1.append((node.rigth_branch, y, x))
+                contenedor_2.append(node.rigth_branch.value)
+                self.draw_nodes(x, y, r, yinicial, node.rigth_branch.value)
+
+            cont += 1
+            contenedor_1.pop(0)
+
+            if resta > 50:
+                resta -= 15
+
+        return contenedor_2
+
+    #Metodo que dibuja cada uno de los valores de los nodos en el arbol
+    def draw_nodes(self, xinicial, yinicial, x, y, valor):
+        if yinicial > 100:
+            pygame.draw.line(self.win, (100,0,105), (x,y+10), (xinicial-5,yinicial+5), 4)
+
+        pygame.draw.circle(self.win, (100,10,255), (xinicial,yinicial), 20, 5)
+
+        text_surface = self.base_font.render(str(valor), True, (0,255,255))
+        self.win.blit(text_surface, (xinicial-5,yinicial-10))
+        
         pygame.display.flip()
 
-    #Metodo que dibuja los circulos para representar los nodos graficamente 
-    # y las lineas que representan los enlaces entre los nodos
-    def son_padre(self, value, xinicial, yinicial):
-        y = yinicial+100
-        suma = y/100
-        x = xinicial - (suma*50)
-        resta = 50
+    #Metodo que resetea la pantalla y luego dibuja las cuadriculas del input de value y nodes,
+    # y llama a la función que dibuja al 'combobox'
+    def borrar_info(self, input_rect_1):
+        self.input_title()
+        self.input_value_and_father()
+        pygame.draw.rect(self.win, (255,255,255), self.input_rect, 2)
+        pygame.draw.rect(self.win, (255,255,255), input_rect_1, 2)
+        text_surface = self.base_font.render(self.user_text, True, (0,255,255))
+        self.win.blit(text_surface, (350,10))
+        self.borrar_informacion_combobox(False)
+    
+    #----------------------------- Grafo --------------------------------
 
-        for i in range(len(self.parents)):
-            if value == self.parents[i]:
-                print(x,'hola', self.nodes[i])
-                if suma > 2:
-                    print('hg1')
-                    x += 50
-                pygame.draw.circle(self.win, (100,10,255), (x,y), 20, 5)
-                pygame.draw.line(self.win, (100,0,105), (xinicial-5,yinicial+10), (x,y-10), 4)
-                texto = self.nodes[i]
-                text_surface = self.base_font.render(texto, True, (0,255,255))
-                self.win.blit(text_surface, (x-5,y-10))
+    def recorre_2(self):
+        index = self.ciudades.index(self.eleccion_1)
+        actual = self.relaciones[index]
+
+        for i in range(len(actual)):
+            actual_2 = actual[i]
+            index_2 = self.ciudades.index(actual_2)
+            
+            actual_2_relaciones = self.relaciones[index_2]
+            for i in range(len(actual_2_relaciones)):
+                if actual_2_relaciones[i] == self.eleccion_2:
+                    x = [actual_2, self.eleccion_2]
+                    self.otros.append(x)
+
+        print('HEllo', self.otros)
+
+    def recorre(self):
+        origen = self.ciudades.index(self.eleccion_1)
+        destino = self.ciudades.index(self.eleccion_2)
+
+        ciudades_origen = self.relaciones[origen]
+        prev = []
+
+        def busqueda(vector, prev):
+            grafos = []
+            estaba = False
+
+            for i in range(len(vector)):
+                actual = vector[i]
+                if actual != self.eleccion_1:
+                    if actual == self.eleccion_2:
+                        grafos.append(actual)
+                    else:
+                        for i in range(len(prev)):
+                            if actual == prev[i]:
+                                estaba = True
+                        
+                        if estaba == False and len(prev) != 18:
+                            index = self.ciudades.index(actual)
+                            prev.insert(0, actual)
+                            grafos.append(actual)
+                            grafos.append(busqueda(self.relaciones[index], prev))
+            return grafos
+            
+        self.grafos = busqueda(ciudades_origen, prev)
+        self.recorre_2()
+        self.dibujar_recorridos()
+        self.dibujar_recorridos_2()
+    
+    def dibujar_recorridos_2(self):
+        index = self.ciudades.index(self.eleccion_1)
+        rect_inicial = self.rectas_ciudades[index]
+        
+        for i in range(len(self.otros)):
+            actual_vector = self.otros[i]
+            segundo_punto = actual_vector[0]
+            tercer_punto = actual_vector[1]
+
+            index_2 = self.ciudades.index(str(segundo_punto))
+            index_3 = self.ciudades.index(str(tercer_punto))
+
+            rect_2 = self.rectas_ciudades[index_2]
+            rect_3 = self.rectas_ciudades[index_3]
+            
+            if i%2 == 0 or i == 0:
+                pygame.draw.line(self.win, (230, 126, 34), (rect_inicial.left, rect_inicial.top), (rect_2.left,rect_2.top), 4)
+                pygame.draw.line(self.win, (230, 126, 34), (rect_2.left,rect_2.top), (rect_3.left,rect_3.top), 4)
+            else: 
+                pygame.draw.line(self.win, (136, 78, 160), (rect_inicial.left, rect_inicial.top), (rect_2.left,rect_2.top), 4)
+                pygame.draw.line(self.win, (136, 78, 160), (rect_2.left,rect_2.top), (rect_3.left,rect_3.top), 4)
+
+    def dibujar_recorridos(self): 
+        index = self.ciudades.index(self.eleccion_1)
+        rect_inicial = self.rectas_ciudades[index]
+        print(self.grafos, index)
+        cont = 0
+
+        for i in range(len(self.grafos)):
+            print(type(self.grafos[0]))
+            if cont == 0 and type(self.grafos[i]) is str:
+                index_2 = self.ciudades.index(self.grafos[i])
+                rect = self.rectas_ciudades[index_2]
+                print('Hola', index_2, rect_inicial, rect)
+
+                pygame.draw.line(self.win, (20,143, 119), (rect_inicial.left,rect_inicial.top), (rect.left,rect.top), 4)
                 
-                pygame.display.flip()
+                if type(self.grafos[i+1]) != str:
+                    actual_2 = self.grafos[i+1]
+                    for i in range(len(actual_2)):
+                        if type(actual_2[i]) is str:
+                            index_3 = self.ciudades.index(actual_2[i])
+                            rect_2 = self.rectas_ciudades[index_3]
+                            print('Hola', index_3, rect_inicial, rect_2)
 
-                self.son_padre(self.nodes[i], x, y)
-                if suma > 2:
-                    print('hg')
-                    x -= 80
-                    resta += (suma*40)
-                x += ((suma*100)+70)-resta
+                            pygame.draw.line(self.win, (20,143, 119), (rect.left,rect.top), (rect_2.left,rect_2.top), 4)
+                        else: 
+                            index_4 = self.ciudades.index(self.eleccion_2)
+                            rect_3 = self.rectas_ciudades[index_4]
+                            print('Hola', index_3, rect_inicial, rect_2)
 
-#----------------------------- Pila --------------------------------
+                            pygame.draw.line(self.win, (20,143, 119), (rect_2.left,rect_2.top), (rect_3.left,rect_3.top), 4)
+
+                cont+=1
+            elif type(self.grafos[i]) is str:
+                index_2 = self.ciudades.index(self.grafos[i])
+                rect = self.rectas_ciudades[index_2]
+                print('Hola', index_2, rect_inicial, rect)
+
+                pygame.draw.line(self.win, (46,134, 193), (rect_inicial.left,rect_inicial.top), (rect.left,rect.top), 4)
+                
+                if i != len(self.grafos)-1:
+                    if type(self.grafos[i+1]) != str:
+                        actual_2 = self.grafos[i+1]
+                        for i in range(len(actual_2)):
+                            if type(actual_2[i]) is str:
+                                index_3 = self.ciudades.index(actual_2[i])
+                                rect_2 = self.rectas_ciudades[index_3]
+                                print('Hola', index_3, rect_inicial, rect_2)
+
+                                pygame.draw.line(self.win, (46,134, 193), (rect.left,rect.top), (rect_2.left,rect_2.top), 4)
+                            else: 
+                                index_4 = self.ciudades.index(self.eleccion_2)
+                                rect_3 = self.rectas_ciudades[index_4]
+                                print('Hola', index_3, rect_inicial, rect_2)
+
+                                pygame.draw.line(self.win, (46,134, 193), (rect_2.left,rect_2.top), (rect_3.left,rect_3.top), 4)
+            pygame.display.flip()
+
+    def mapa_fondo(self):
+        if self.tam_mapa_rect == None:
+            tam_image = self.img_mapa.get_rect()
+            tam_image.left += 360
+            tam_image.top += 20
+            self.tam_mapa_rect = tam_image
+
+        self.win.blit(self.img_mapa, self.tam_mapa_rect)
+
+    def combo_origen(self):
+        pygame.draw.rect(self.win, self.color_menu, self.rect_combo_1, 0)
+        self.img_1 = pygame.image.load("descarga.png")
+        self.rect_mov1 = pygame.Rect(30, 70, 100, 25) 
+        self.rect_mov1.left += 100
+        self.win.blit(self.img_1, self.rect_mov1)
+
+    def combo_destino(self):
+        pygame.draw.rect(self.win, self.color_menu, self.rect_combo_2, 0)
+        self.img_2 = pygame.image.load("descarga.png")
+        self.rect_mov2 = pygame.Rect(190, 70, 100, 25) 
+        self.rect_mov2.left += 100
+        self.win.blit(self.img_2, self.rect_mov2)
+
+    def inicio_juego(self):
+        cont_1 = 0
+        cont_2 = 0
+
+        self.mapa_fondo()
+        self.dibujar_nodos_mapa()
+        self.combo_origen()
+        self.combo_destino()
+        self.relaciones_ciudades()
+
+        while not self.terminar_grafo:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:  self.terminar_grafo = True
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos() 
+                    if mouse_pos[0] >= self.rect_mov2.left and mouse_pos[0] <= self.rect_mov2.left+25:
+                        if cont_1 == 0 or cont_1%2 == 0:
+                            self.draw_menu_2 = True
+                        else:
+                            self.win.fill((0,0,0))
+                            self.borrar_info_grafo()
+                            self.draw_menu_2 = False
+                        cont_1+= 1
+                    elif mouse_pos[0] >= self.rect_mov1.left and mouse_pos[0] <= self.rect_mov1.left+25:
+                        if cont_2 == 0 or cont_2%2 == 0:
+                            self.draw_menu_1 = True
+                        else:
+                            self.win.fill((0,0,0))
+                            self.borrar_info_grafo()
+                            self.draw_menu_1 = False
+                        cont_2+= 1
+                    else:
+                        if self.draw_menu_1 == True:
+                            i = 0
+                            while i <= len(self.rectas_options_1)-1:
+                                actual = self.rectas_options_1[i]
+                                if mouse_pos[1] <= actual.top+20 and mouse_pos[1] >= actual.top and mouse_pos[0] <= actual.left+90 and mouse_pos[0] >= actual.left:
+                                    self.win.fill((0,0,0))
+                                    self.eleccion_1 = self.ciudades[i]
+                                    print(self.eleccion_1)
+                                    self.borrar_info_grafo()
+                                    self.draw_menu_1 = False
+                                i+=1
+                        if self.draw_menu_2 == True:
+                            i = 0
+                            while i <= len(self.rectas_options_2)-1:
+                                actual = self.rectas_options_2[i]
+                                if mouse_pos[1] <= actual.top+20 and mouse_pos[1] >= actual.top and mouse_pos[0] <= actual.left+90 and mouse_pos[0] >= actual.left:
+                                    self.win.fill((0,0,0))
+                                    self.eleccion_2 = self.ciudades[i]
+                                    print(self.eleccion_2)
+                                    self.borrar_info_grafo()
+                                    self.draw_menu_2 = False
+                                i+=1
+
+                        if self.eleccion_1 != None and self.eleccion_2 != None:
+                            self.grafos = []
+                            self.recorre()
+
+                if self.draw_menu_1:
+                    for i, text in enumerate(self.ciudades):
+                        rect = self.rect_combo_1.copy()
+
+                        rect.y += (i+1) * self.rect_combo_1.height
+                        self.rectas_options_1.insert(i, rect)
+                        if len(self.rectas_options_1) > i+1:
+                            self.rectas_options_1.pop(i+1)
+
+                        pygame.draw.rect(self.win, self.color_menu, rect, 0)
+                        msg = self.base_font_2.render(text, 1, self.color_option)
+                        self.win.blit(msg, rect)
+                elif self.draw_menu_2:
+                    for i, text in enumerate(self.ciudades):
+                        rect = self.rect_combo_2.copy()
+
+                        rect.y += (i+1) * self.rect_combo_2.height
+                        self.rectas_options_2.insert(i, rect)
+                        if len(self.rectas_options_2) > i+1:
+                            self.rectas_options_2.pop(i+1)
+
+                        pygame.draw.rect(self.win, self.color_menu, rect, 0)
+                        msg = self.base_font_2.render(text, 1, self.color_option)
+                        self.win.blit(msg, rect)
+
+            pygame.display.flip()
+
+    def borrar_info_grafo(self):
+        self.mapa_fondo()
+        self.dibujar_nodos_mapa()
+        self.combo_origen()
+        self.combo_destino()
+        self.dibujar_recorridos()
+
+        if self.eleccion_1 != None: 
+            msg = self.base_font_2.render(self.eleccion_1, 1, (0, 0, 0))
+            rect = self.rect_combo_1.copy()
+            rect.top += 7
+            self.win.blit(msg, rect)
+        if self.eleccion_2 != None: 
+            msg = self.base_font_2.render(self.eleccion_2, 1, (0, 0, 0))
+            rect = self.rect_combo_2.copy()
+            rect.top += 7
+            self.win.blit(msg, rect)
+
+    def relaciones_ciudades(self):
+        self.relaciones.append(('Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Medellin', 'Monteria', 'Neiva', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Medellin', 'Monteria', 'Pereira', 'Santa Marta'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Medellin', 'Monteria', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Valledupar', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Villavicencio'))
+        self.relaciones.append(('San Andrés', 'Armenia', 'Barranquilla', 'Bucaramanga', 'Bogotá', 'Cali', 'Cartagena', 'Cúcuta', 'Leticia', 'Medellin', 'Monteria', 'Neiva', 'Pereira', 'Pasto', 'Santa Marta', 'Valledupar'))
+
+    def dibujar_nodos_mapa(self):
+        tam_image_1 = self.img_mapa.get_rect()
+
+        tam_image_1.top += 50
+        tam_image_1.left += 405
+
+        self.rectas_ciudades.insert(0, tam_image_1)
+        if len(self.rectas_ciudades) > 1:
+            self.rectas_ciudades.pop(1)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_1.left, tam_image_1.top), 4, 5)
+        
+        tam_image_2 = tam_image_1.copy()
+        tam_image_2.left += 108
+        tam_image_2.top += 331
+        self.rectas_ciudades.insert(1, tam_image_2)
+        if len(self.rectas_ciudades) > 2:
+            self.rectas_ciudades.pop(2)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_2.left, tam_image_2.top), 4, 5)
+
+        tam_image_3 = tam_image_2.copy()
+        tam_image_3.left += 41
+        tam_image_3.top -= 285
+        self.rectas_ciudades.insert(2, tam_image_3)
+        if len(self.rectas_ciudades) > 3:
+            self.rectas_ciudades.pop(3)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_3.left, tam_image_3.top), 4, 5)
+
+        tam_image_4 = tam_image_3.copy()
+        tam_image_4.left += 73
+        tam_image_4.top += 172
+        self.rectas_ciudades.insert(3, tam_image_4)
+        if len(self.rectas_ciudades) > 4:
+            self.rectas_ciudades.pop(4)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_4.left, tam_image_4.top), 4, 5)
+
+        tam_image_5 = tam_image_4.copy()
+        tam_image_5.left -= 44
+        tam_image_5.top += 108
+        self.rectas_ciudades.insert(4, tam_image_5)
+        if len(self.rectas_ciudades) > 5:
+            self.rectas_ciudades.pop(5)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_5.left, tam_image_5.top), 4, 5)
+
+        tam_image_6 = tam_image_5.copy()
+        tam_image_6.left -= 108
+        tam_image_6.top += 56
+        self.rectas_ciudades.insert(5, tam_image_6)
+        if len(self.rectas_ciudades) > 6:
+            self.rectas_ciudades.pop(6)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_6.left, tam_image_6.top), 4, 5)
+
+        tam_image_7 = tam_image_6.copy()
+        tam_image_7.left += 49
+        tam_image_7.top -= 313
+        self.rectas_ciudades.insert(6, tam_image_7)
+        if len(self.rectas_ciudades) > 7:
+            self.rectas_ciudades.pop(7)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_7.left, tam_image_7.top), 4, 5)
+
+        tam_image_8 = tam_image_7.copy()
+        tam_image_8.left += 131
+        tam_image_8.top += 113
+        self.rectas_ciudades.insert(7, tam_image_8)
+        if len(self.rectas_ciudades) > 8:
+            self.rectas_ciudades.pop(8)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_8.left, tam_image_8.top), 4, 5)
+
+        tam_image_9 = tam_image_8.copy()
+        tam_image_9.left += 114
+        tam_image_9.top += 535
+        self.rectas_ciudades.insert(8, tam_image_9)
+        if len(self.rectas_ciudades) > 9:
+            self.rectas_ciudades.pop(9)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_9.left, tam_image_9.top), 4, 5)
+
+        tam_image_10 = tam_image_9.copy()
+        tam_image_10.left -= 250
+        tam_image_10.top -= 463
+        self.rectas_ciudades.insert(9, tam_image_10)
+        if len(self.rectas_ciudades) > 10:
+            self.rectas_ciudades.pop(10)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_10.left, tam_image_10.top), 4, 5)
+
+        tam_image_11 = tam_image_10.copy()
+        tam_image_11.left -= 15
+        tam_image_11.top -= 110
+        self.rectas_ciudades.insert(10, tam_image_11)
+        if len(self.rectas_ciudades) > 11:
+            self.rectas_ciudades.pop(11)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_11.left, tam_image_11.top), 4, 5)
+
+        tam_image_12 = tam_image_11.copy()
+        tam_image_12.left += 30
+        tam_image_12.top += 257
+        self.rectas_ciudades.insert(11, tam_image_12)
+        if len(self.rectas_ciudades) > 12:
+            self.rectas_ciudades.pop(12)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_12.left, tam_image_12.top), 4, 5)
+
+        tam_image_13 = tam_image_12.copy()
+        tam_image_13.left -= 22
+        tam_image_13.top -= 82
+        self.rectas_ciudades.insert(12, tam_image_13)
+        if len(self.rectas_ciudades) > 13:
+            self.rectas_ciudades.pop(13)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_13.left, tam_image_13.top), 4, 5)
+
+        tam_image_14 = tam_image_13.copy()
+        tam_image_14.left -= 67
+        tam_image_14.top += 160
+        self.rectas_ciudades.insert(13, tam_image_14)
+        if len(self.rectas_ciudades) > 14:
+            self.rectas_ciudades.pop(14)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_14.left, tam_image_14.top), 4, 5)
+
+        tam_image_15 = tam_image_14.copy()
+        tam_image_15.left += 191
+        tam_image_15.top -= 457
+        self.rectas_ciudades.insert(14, tam_image_15)
+        if len(self.rectas_ciudades) > 15:
+            self.rectas_ciudades.pop(15)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_15.left, tam_image_15.top), 4, 5)
+
+        tam_image_16 = tam_image_15.copy()
+        tam_image_16.left -= 55
+        tam_image_16.top += 14
+        self.rectas_ciudades.insert(15, tam_image_16)
+        if len(self.rectas_ciudades) > 16:
+            self.rectas_ciudades.pop(16)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_16.left, tam_image_16.top), 4, 5)
+
+        tam_image_17 = tam_image_16.copy()
+        tam_image_17.left += 40
+        tam_image_17.top += 35
+        self.rectas_ciudades.insert(16, tam_image_17)
+        if len(self.rectas_ciudades) > 17:
+            self.rectas_ciudades.pop(17)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_17.left, tam_image_17.top), 4, 5)
+
+        tam_image_18 = tam_image_17.copy()
+        tam_image_18.left -= 18
+        tam_image_18.top += 280
+        self.rectas_ciudades.insert(17, tam_image_18)
+        if len(self.rectas_ciudades) > 18:
+            self.rectas_ciudades.pop(18)
+        pygame.draw.circle(self.win, self.rojo, (tam_image_18.left, tam_image_18.top), 4, 5)
+
+    #----------------------------- Pila --------------------------------
 
     #Se desarrolla un metodo que controle los movimientos del mouse y el teclado una vez que se ha presionado el botón 'pila'
     def control_pila_mouse(self, cont_cartas):
@@ -756,9 +1277,13 @@ class barajas():
         elif mouse_pos[0] >= self.rect7.left-10 and mouse_pos[0] < self.rect7.left+70 and mouse_pos[1] >= self.rect7.top-10:
             self.cont_pila7 += 1
             self.pila7.insert(self.cont_pila7 -1, imagen)
+        elif mouse_pos[0] >= self.r1.left-10 and mouse_pos[0] < self.r1.left+70 and mouse_pos[1] >= self.r1.top-10 and mouse_pos[1] < self.r1.top+170:
+            self.cont_pila8 += 1
+            self.pila8.insert(self.cont_pila8 -1, imagen)
 
     #Se verifica que la carta que se desea ingresar corresponda a la carta que le sigue a la que ya está en la pila
     def verificar_continuidad_orden(self, pila, posicion, imagen):
+
         listo = False
 
         if pila[posicion-1] == self.imgA or pila[posicion-1] == self.Aca: 
@@ -819,10 +1344,26 @@ class barajas():
         elif  pila[posicion-1] == self.img3: 
             if imagen == self.img2 or imagen == self.Ic2:
                 listo = True
+
+                #Se verifica el numero de cartas que ya han sigdo registradas en la pila
+                #esto para saber si ya ha sido llenada
+                if posicion+1 >= 13:
+                    #En caso de obtener una respuesta afirmativa, se llama a la siguiente función para imprimir 
+                    #el mensaje que señale que ya la pila se ha llenado
+                    self.llenado_pila()
+
             else:
                 listo = False
 
         return listo
+
+    #Se muestra un mensaje que indica que ya al menos una pila ha sido completada
+    def llenado_pila(self):
+        text = '---------- End -------------'
+        base_font = pygame.font.Font(None, 50)
+        text_surface = base_font.render(text, True, (255,0,0))
+        self.win.blit(text_surface, (350,self.alto-100))
+        pygame.display.flip()
 
     #Se ingresa la imagen en la ultima posición de la pila
     def confirmar_ingreso_pila(self, imagen):
@@ -840,6 +1381,8 @@ class barajas():
             self.pila7[self.cont_pila7-1] = imagen
         elif self.voltear.left == self.copy_rect1.left and self.pila1[self.cont_pila1-1] == self.imgAtras:
             self.pila1[self.cont_pila1-1] = imagen
+        elif self.voltear.left == self.copy_rect8.left and self.cont_pila8 > 0:
+            self.pila8[self.cont_pila8-1] = imagen
 
     #Con este metodo se 'crea' la pila
     def mov_mouse_1(self):
@@ -849,14 +1392,6 @@ class barajas():
                             self.img6.get_rect(), self.img5.get_rect(), self.img4.get_rect(), self.img3.get_rect(), self.img2.get_rect()]
         self.tam_image = self.imgAtras.get_rect()
         print('listo')
-
-    #Se verifica que cartas ya han sido sacadas del monto y se han intriducido al juego
-    #esto para dibujarlas de nuevo cada que la pantalla sea 'reseteada'
-    '''def verificar_cartas_dibujadas(self, cont):
-        if cont <= 13:
-            for i in range(0, cont):
-                tam_image = self.array_tam_image[i]
-                self.win.blit(self.array[i], tam_image)'''
 
     #Se define la carta que sigue en la extracción de las mismas del monto
     def definir_carta(self, cont):
@@ -883,19 +1418,6 @@ class barajas():
         self.win.blit(carta, tam_image_1)
 
         return carta
-
-    #Metodo creado para que las imagenes que sean seleccionadas y que ya han sido extraidas del monto
-    #puedan moverse con el mouse, mientras se re-dibuja la pantalla 
-    '''def mov_true_2(self, cont_cartas, i, mouse_pos):
-        self.win.fill((25,111,61))
-        self.verificar_cartas_dibujadas(cont_cartas-1)
-
-        tam_image_1 = self.array[i].get_rect()
-        tam_image_1.left = mouse_pos[0]
-        tam_image_1.top = mouse_pos[1]
-        
-        self.array_tam_image[i] = tam_image_1
-        self.win.blit(self.array[i], tam_image_1)'''
 
     #Metodo creado para que la imagen que sea seleccionada de las 7 pilas de abajo
     #pueda moverse con el mouse, mientras se re-dibuja la pantalla 
@@ -925,6 +1447,8 @@ class barajas():
             self.cont_pila6 -= 1
         elif self.mov_pila7 == True: 
             self.cont_pila7 -= 1
+        elif self.mov_pila8 == True: 
+            self.cont_pila8 -= 1
 
         self.confirmar_identidad_mov_carta()
         self.crear_imagenes_pilas()
@@ -946,6 +1470,8 @@ class barajas():
             self.imagen_mov = self.pila6[self.cont_pila6]
         elif self.mov_pila7 == True: 
             self.imagen_mov = self.pila7[self.cont_pila7]
+        elif self.mov_pila8 == True: 
+            self.imagen_mov = self.pila8[self.cont_pila8]
 
     #Se dibuja el monto de cartas en una esquina de la pantalla, pero solo para la interfaz de pila
     #también se ilustran los rectangulos de la parte superior de la pantalla
@@ -955,12 +1481,11 @@ class barajas():
         tam_image_1 = None
         grey = (213,219,219)
 
-        r1 = pygame.Rect(350, 10, 95, 166)
         r2 = pygame.Rect(470 , 10, 95, 166)
         r3 = pygame.Rect(570, 10, 95, 166)
         r4 = pygame.Rect(680, 10, 95, 166)
 
-        pygame.draw.rect(self.win, grey, r1, 4, 5)
+        pygame.draw.rect(self.win, grey, self.r1, 4, 5)
         pygame.draw.rect(self.win, grey, r2, 4, 5)
         pygame.draw.rect(self.win, grey, r3, 4, 5)
         pygame.draw.rect(self.win, grey, r4, 4, 5)
@@ -988,6 +1513,7 @@ class barajas():
         self.organizar_pila_5()
         self.organizar_pila_6()
         self.organizar_pila_7()
+        self.organizar_pila_8()
 
     #Dibuja las cartas que estan en la pil 1 a en el rango que se estable con la variable self.cont_pila1
     #variable que aumenta o disminuye cada que se saque o inserte una carta a la pila
@@ -1000,7 +1526,7 @@ class barajas():
             for i in range(0, self.cont_pila1): 
                 tam_image_1 = self.copy_rect1
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 #Se pregunta si estamos en la ultima posicion de la lista para agregar la ubicacion 
                 #en una lista que después nos permitirá conocer la ubicación de la carta a la que se 
@@ -1039,7 +1565,7 @@ class barajas():
             for i in range(0, self.cont_pila2): 
                 tam_image_1 = self.copy_rect2
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila2-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect2)
@@ -1061,7 +1587,7 @@ class barajas():
             for i in range(0, self.cont_pila3): 
                 tam_image_1 = self.copy_rect3
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila3-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect3)
@@ -1075,7 +1601,7 @@ class barajas():
                     self.pila3.append(self.imgAtras)
                     self.win.blit(self.imgAtras, tam_image_1)
 
-    #Dibuja las cartas que estan en la pila 4 en el rango que se estable con la variable self.cont_pila4
+    #Dibuja las cartas que estan en la pila 4 en el rango que se establece con la variable self.cont_pila4
     def organizar_pila_4(self):
         top = self.copy_rect4.top
 
@@ -1083,7 +1609,7 @@ class barajas():
             for i in range(0, self.cont_pila4): 
                 tam_image_1 = self.copy_rect4
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila4-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect4)
@@ -1097,7 +1623,7 @@ class barajas():
                     self.pila4.append(self.imgAtras)
                     self.win.blit(self.imgAtras, tam_image_1)
 
-    #Dibuja las cartas que estan en la pila 5 en el rango que se estable con la variable self.cont_pila5
+    #Dibuja las cartas que estan en la pila 5 en el rango que se establece con la variable self.cont_pila5
     def organizar_pila_5(self):
         top = self.copy_rect5.top
 
@@ -1105,7 +1631,7 @@ class barajas():
             for i in range(0, self.cont_pila5): 
                 tam_image_1 = self.copy_rect5
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila5-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect5)
@@ -1119,7 +1645,7 @@ class barajas():
                     self.pila5.append(self.imgAtras)
                     self.win.blit(self.imgAtras, tam_image_1)
 
-    #Dibuja las cartas que estan en la pila 6 en el rango que se estable con la variable self.cont_pila6
+    #Dibuja las cartas que estan en la pila 6 en el rango que se establece con la variable self.cont_pila6
     def organizar_pila_6(self):
         top = self.copy_rect6.top
 
@@ -1127,7 +1653,7 @@ class barajas():
             for i in range(0, self.cont_pila6): 
                 tam_image_1 = self.copy_rect6
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila6-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect6)
@@ -1141,7 +1667,7 @@ class barajas():
                     self.pila6.append(self.imgAtras)
                     self.win.blit(self.imgAtras, tam_image_1)
 
-    #Dibuja las cartas que estan en la pila 7 en el rango que se estable con la variable self.cont_pila7
+    #Dibuja las cartas que estan en la pila 7 en el rango que se establece con la variable self.cont_pila7
     def organizar_pila_7(self):
         top = self.copy_rect7.top
 
@@ -1149,7 +1675,7 @@ class barajas():
             for i in range(0, self.cont_pila7): 
                 tam_image_1 = self.copy_rect7
                 tam_image_1.top = top
-                top += 20
+                top += 30
                 
                 if i == self.cont_pila7-1:
                     self.cartas_abajo_apiladas.append(self.copy_rect7)
@@ -1163,6 +1689,22 @@ class barajas():
                     self.pila7.append(self.imgAtras)
                     self.win.blit(self.imgAtras, tam_image_1)
 
+    #Dibuja las cartas que estan en la pila 8 en el rango que se establece con la variable self.cont_pila8
+    def organizar_pila_8(self):
+        top = self.copy_rect8.top
+
+        if self.cont_pila8 > 0:
+            for i in range(0, self.cont_pila8): 
+                tam_image_1 = self.copy_rect8
+                tam_image_1.top = top
+                
+                if i == self.cont_pila8-1:
+                    self.cartas_abajo_apiladas.append(self.copy_rect8)
+
+                self.win.blit(self.pila8[i], tam_image_1)
+
+    #Se crean las copias iniciales de las rectas principales de cada pila
+    #para partir de ahí con el dibjo de cada imagen perteneciente a la pila
     def crear_copias(self):
         self.copy_rect1 = pygame.Rect(20, 200, 95, 166)
         self.copy_rect2 = pygame.Rect(130, 200, 95, 166)
@@ -1171,14 +1713,20 @@ class barajas():
         self.copy_rect5 = pygame.Rect(460, 200, 95, 166)
         self.copy_rect6 = pygame.Rect(570, 200, 95, 166)
         self.copy_rect7 = pygame.Rect(680, 200, 95, 166)
+        self.copy_rect8 = pygame.Rect(350, 10, 95, 166)
 
-        self.vector_copy = [self.copy_rect1, self.copy_rect2, self.copy_rect3, self.copy_rect4, self.copy_rect5, self.copy_rect6, self.copy_rect7]
+        self.vector_copy = [self.copy_rect1, self.copy_rect2, self.copy_rect3, self.copy_rect4, self.copy_rect5, self.copy_rect6, self.copy_rect7, self.copy_rect8]
 
+    #Se crean las imagenes aleatorias mostradas al final de la pila 
     def crear_imagenes_pilas(self):
+        #Se crean las copias de las rectas principales de cada pila
         self.crear_copias()
+        x = len(self.vector_copy)-1
 
-        for i in range(0, len(self.vector_copy)): 
+        for i in range(0, x): 
             actual = self.vector_copy[i]
+            #Se elige un numero que esté en el rango del tamaño de la lista
+            #que contiene a las imagenes
             numero = random.randrange(0, len(self.imagenes)-1)
             imag = self.imagenes[numero]
             self.vector_copy_imagenes.append(imag)
@@ -1215,6 +1763,7 @@ class barajas():
             #y de ser el caso se identifica la pila en la que se encuentra la carta
             #para llamar a una función que diga que todas las demas pilas no son
             if tam_imagen.collidepoint(pygame.mouse.get_pos()):
+
                 if tam_imagen.left == self.rect1.left:
                     self.mov_pila1 = True
                     self.imagen_mov_pila1()
@@ -1224,10 +1773,10 @@ class barajas():
                 elif tam_imagen.left == self.rect3.left:
                     self.mov_pila3 = True
                     self.imagen_mov_pila3()
-                elif tam_imagen.left == self.rect4.left:
+                elif tam_imagen.left == self.rect4.left and tam_imagen.top >= self.rect4.top-15:
                     self.mov_pila4 = True
                     self.imagen_mov_pila4()
-                elif tam_imagen.left == self.rect5.left:
+                elif tam_imagen.left == self.rect5.left and tam_imagen.top >= self.rect5.top-15:
                     self.mov_pila5 = True
                     self.imagen_mov_pila5()
                 elif tam_imagen.left == self.rect6.left:
@@ -1236,6 +1785,9 @@ class barajas():
                 elif tam_imagen.left == self.rect7.left:
                     self.mov_pila7 = True
                     self.imagen_mov_pila7()
+                elif tam_imagen.left > self.r1.left-20 and tam_imagen.left < self.r1.left+110:
+                    self.mov_pila8 = True
+                    self.imagen_mov_pila8()
 
                 #Se estable la ubicación de la carta tocada, ingresando esta en la variable global
                 self.tam_image_2 = self.cartas_abajo_apiladas[i]
@@ -1252,6 +1804,7 @@ class barajas():
         self.mov_pila5 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
     
     def imagen_mov_pila2(self):
         self.mov_pila1 = False
@@ -1260,6 +1813,7 @@ class barajas():
         self.mov_pila5 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
     def imagen_mov_pila3(self):
         self.mov_pila1 = False
@@ -1268,6 +1822,7 @@ class barajas():
         self.mov_pila5 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
     def imagen_mov_pila4(self):
         self.mov_pila1 = False
@@ -1276,6 +1831,7 @@ class barajas():
         self.mov_pila5 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
     def imagen_mov_pila5(self):
         self.mov_pila1 = False
@@ -1284,6 +1840,7 @@ class barajas():
         self.mov_pila3 = False
         self.mov_pila6 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
     def imagen_mov_pila6(self):
         self.mov_pila1 = False
@@ -1292,6 +1849,7 @@ class barajas():
         self.mov_pila3 = False
         self.mov_pila5 = False
         self.mov_pila7 = False
+        self.mov_pila8 = False
 
     def imagen_mov_pila7(self):
         self.mov_pila1 = False
@@ -1300,3 +1858,13 @@ class barajas():
         self.mov_pila3 = False
         self.mov_pila5 = False
         self.mov_pila6 = False
+        self.mov_pila8 = False
+
+    def imagen_mov_pila8(self):
+        self.mov_pila1 = False
+        self.mov_pila2 = False
+        self.mov_pila4 = False
+        self.mov_pila3 = False
+        self.mov_pila5 = False
+        self.mov_pila6 = False
+        self.mov_pila7 = False
